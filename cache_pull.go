@@ -7,17 +7,17 @@ import (
 	"time"
 )
 
-func (c *cache) saveData(name string, data []byte) error {
-	savePath := path.Join(c.DataDir, name+DATA_FILE_EXT)
+func (c *Cache) saveData(name string, data []byte) error {
+	savePath := path.Join(c.DataDir, name+c.DataFileExt)
 	if err := ioutil.WriteFile(savePath, data, 0755); err != nil {
-		c.log.Errorf("cache <%s>: cannot save the data file to <%s> -- %s", name, savePath, err.Error())
+		c.log.Errorf("Cache <%s>: cannot save the data file to <%s> -- %s", name, savePath, err.Error())
 		return err
 	}
-	c.log.Infof("cache <%s>: saved to <%s>", name, savePath)
+	c.log.Infof("Cache <%s>: saved to <%s>", name, savePath)
 	return nil
 }
 
-func (c *cache) CachePullAll() []error {
+func (c *Cache) CachePullAll() []error {
 	var errors []error
 
 	for k, _ := range c.Items {
@@ -29,7 +29,7 @@ func (c *cache) CachePullAll() []error {
 	return errors
 }
 
-func (c *cache) CachePull(name string) error {
+func (c *Cache) CachePull(name string) error {
 	if ci, err := c.GetCacheItem(name); err != nil {
 		c.log.Errorf("failed to pull <%s> -- %s", name, err.Error())
 		return err
@@ -41,10 +41,10 @@ func (c *cache) CachePull(name string) error {
 		c.log.Debugf("CachePull(%s): new updated URL=<%s>", name, url)
 		resp, err := c.conn.Req(ci.Request.Method, url, ci.Request.ID, ci.Request.Passwd, []byte(ci.Request.Body), ci.Request.ContentType)
 		if err != nil {
-			c.log.Errorf("cache <%s>: cannot get pull data from URL <%s> -- %s", name, url, err.Error())
+			c.log.Errorf("Cache <%s>: cannot get pull data from URL <%s> -- %s", name, url, err.Error())
 			return err
 		}
-		if err:= c.saveData(name, resp); err != nil {
+		if err := c.saveData(name, resp); err != nil {
 			return err
 		}
 
@@ -55,6 +55,6 @@ func (c *cache) CachePull(name string) error {
 	}
 }
 
-func(c *cache) now() string {
+func (c *Cache) now() string {
 	return time.Now().Format("2006-01-02 15:04:05")
 }

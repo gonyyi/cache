@@ -10,91 +10,91 @@ import (
 	"sync"
 )
 
-const DATA_FILE_EXT = ".download"
+const DEFAULT_DATA_FILE_EXT = ".download"
 
-var DEFAULT_LOG_OUTPUT = os.Stderr
-
-type cache struct {
-	log        cacheLogger
-	conn       httpClient
-	mu         sync.Mutex // global mutex
-	configFile string
-	DataDir    string                `json:"data_dir"`
-	Items      map[string]*cacheItem `json:"items"`
+type Cache struct {
+	log         cacheLogger
+	conn        httpClient
+	mu          sync.Mutex // global mutex
+	configFile  string
+	DataFileExt string                `json:"data_file_ext"`
+	DataDir     string                `json:"data_dir"`
+	Items       map[string]*cacheItem `json:"items"`
 }
 
-func (c *cache) init() *cache {
+func (c *Cache) init() *Cache {
 	c.log = NewCacheLog(os.Stderr)
 	c.conn = NewAReq()
+	c.DataFileExt = DEFAULT_DATA_FILE_EXT
 	c.DataDir = "./tmp"
 	c.Items = make(map[string]*cacheItem)
 	return c
 }
 
-func (c *cache) IsCacheExists(name string) bool {
+func (c *Cache) IsCacheExists(name string) bool {
 	if _, ok := c.Items[name]; ok {
 		return true
 	}
 	return false
 }
-func (c *cache) GetCacheData(name string) ([]byte, error) {
+func (c *Cache) GetCacheData(name string) ([]byte, error) {
 	if _, ok := c.Items[name]; ok {
-		dataPath := path.Join(c.DataDir, name+DATA_FILE_EXT)
+		dataPath := path.Join(c.DataDir, name+c.DataFileExt)
 		b, err := ioutil.ReadFile(dataPath)
 		if err != nil {
-			c.log.Errorf("cache item <%s>: cannot retreat data file <%s>", name, dataPath)
+			c.log.Errorf("Cache item <%s>: cannot retreat data file <%s>", name, dataPath)
 			return nil, err
 		}
 		c.log.Debugf("GetCacheData(%s): retreated data file <%s>", name, dataPath)
 		return b, nil
 	}
-	c.log.Errorf("GetCacheData(%s): cache item does not exist", name)
-	return nil, fmt.Errorf("cache item <%s> does not exist", name)
+	c.log.Errorf("GetCacheData(%s): Cache item does not exist", name)
+	return nil, fmt.Errorf("Cache item <%s> does not exist", name)
 }
-func (c *cache) GetCacheItem(name string) (*cacheItem, error) {
+func (c *Cache) GetCacheItem(name string) (*cacheItem, error) {
 	if ci, ok := c.Items[name]; ok {
 		c.log.Debugf("GetCacheItem(%s) -- found", name)
 		return ci, nil
 	}
-	c.log.Errorf("cache item <%s> does not exist", name)
-	return nil, fmt.Errorf("cache item <%s> does not exist", name)
+	c.log.Errorf("Cache item <%s> does not exist", name)
+	return nil, fmt.Errorf("Cache item <%s> does not exist", name)
 }
-func (c *cache) AddCache(name, method, url, id, passwd string) error {
+func (c *Cache) AddCache(name, method, url, id, passwd string) error {
 	// check if already exist
 	if c.IsCacheExists(name) {
-		c.log.Errorf("cache item <%s> already exists", name)
-		return fmt.Errorf("cache item <%s> already exists", name)
+		c.log.Errorf("Cache item <%s> already exists", name)
+		return fmt.Errorf("Cache item <%s> already exists", name)
 	}
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.Items[name] = newCacheItem(method, url, id, passwd)
-	c.log.Infof("added cache item <%s> with method: <%s>, URL: <%s>, ID: <%s>, passwd: <%s>",
+	c.log.Infof("added Cache item <%s> with method: <%s>, URL: <%s>, ID: <%s>, passwd: <%s>",
 		name, method, url, id, strings.Repeat("*", len(passwd)))
 	return nil
 }
 
-func (c *cache) RemoveCache(name string, removeData bool) error {
+func (c *Cache) RemoveCache(name string, removeData bool) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.log.Infof("removing cache <%s>", name)
+	c.log.Infof("removing Cache <%s>", name)
 
 	if _, ok := c.Items[name]; ok {
-		if err := os.Remove(path.Join(c.DataDir, name+DATA_FILE_EXT)); err != nil {
-			c.log.Errorf("failed to remove cache <%s>'s data file <%s> -- %s", name, name+DATA_FILE_EXT, err.Error())
+		if err := os.Remove(path.Join(c.DataDir, name+c.DataFileExt)); err != nil {
+			c.log.Errorf("failed to remove Cache <%s>'s data file <%s> -- %s", name, name+c.DataFileExt, err.Error())
 			return err
 		}
 		delete(c.Items, name)
-		c.log.Infof("removed cache <%s>", name)
+		c.log.Infof("removed Cache <%s>", name)
 		return nil
 	}
-	c.log.Errorf("failed to remove cache <%s> -- cache not exist", name)
-	return fmt.Errorf("cache item <%s> not exist", name)
+	c.log.Errorf("failed to remove Cache <%s> -- Cache not exist", name)
+	return fmt.Errorf("Cache item <%s> not exist", name)
 }
 
-func (c *cache) Save() error {
+func (c *Cache) Save() error {
 	b, err := json.MarshalIndent(c, "", "   ")
 	if err != nil {
 		return err
@@ -119,16 +119,16 @@ func NewConfig(filename string, addExampleCache bool) error {
 	return nil
 }
 
-func new() *cache {
-	r := cache{}
+func new() *Cache {
+	r := Cache{}
 	return r.init()
 }
 
-func New(configPath string) (*cache, error) {
+func New(configPath string) (*Cache, error) {
 	r := new()
 	r.configFile = configPath
 
-	r.log.Infof("initiating cache <%s>", configPath)
+	r.log.Infof("initiating Cache <%s>", configPath)
 
 	if b, err := ioutil.ReadFile(configPath); err != nil {
 		r.log.Errorf("cannot open the config file <%s>: %s", configPath, err.Error())
@@ -158,11 +158,11 @@ func New(configPath string) (*cache, error) {
 		}
 	}
 
-	r.log.Infof("total cache items: %d", len(r.Items))
+	r.log.Infof("total Cache items: %d", len(r.Items))
 	count := 0
 	for name, _ := range r.Items {
 		count += 1
-		r.log.Infof("cache item [%d]: <%s>", count, name)
+		r.log.Infof("Cache item [%d]: <%s>", count, name)
 	}
 	return r, nil
 }

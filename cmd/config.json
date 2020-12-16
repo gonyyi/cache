@@ -1,4 +1,5 @@
 {
+   "data_file_ext": ".downloaded",
    "data_dir": "./tmp",
    "items": {
       "test": {
@@ -14,8 +15,8 @@
             }
          },
          "response": {
-            "last_updated": "2020-12-15 18:42:27",
-            "size_kb": 996
+            "last_updated": "2020-12-15 21:03:28",
+            "size": 996
          }
       }
    }

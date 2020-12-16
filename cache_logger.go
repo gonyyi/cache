@@ -29,11 +29,11 @@ const (
 
 func NewCacheLog(out io.Writer) *cacheLog {
 	c := cacheLog{}
-	c.SetPrefix("cache ")
+	c.SetPrefix("Cache ")
 	c.SetFlag(alog.F_STD)
 	c.SetOutput(out)
 	c.LvOverride(LvALL)
-	// c.LvDisable(LvDEBUG)
+	c.LvDisable(LvDEBUG)
 	return &c
 }
 

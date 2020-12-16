@@ -15,6 +15,4 @@ func main() {
 	c.CachePull("test")
 	c.Save()
 
-	b, _ := c.GetCacheData("test")
-	println(string(b))
 }
