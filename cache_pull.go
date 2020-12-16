@@ -49,7 +49,7 @@ func (c *cache) CachePull(name string) error {
 		}
 
 		ci.Response.LastUpdated = c.now()
-		ci.Response.SizeKB = len(resp)
+		ci.Response.Size = len(resp)
 
 		return nil
 	}
