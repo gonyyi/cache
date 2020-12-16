@@ -30,7 +30,8 @@ func (c *cacheAReq) Req(Method, URL, ID, PWD string, BODY []byte, BODY_EXT strin
 	defer c.mu.Unlock()
 	statusCode, err := c.req.Request(Method, URL,
 		areq.Plugin.BasicAuth(ID, PWD),
-		areq.Plugin.SetBody(bytes.NewReader(BODY), BODY_EXT))
+		areq.Plugin.SetBody(bytes.NewReader(BODY), BODY_EXT),
+		areq.Plugin.AcceptEncoding("gzip"))
 	if err != nil {
 		return nil, err
 	}
