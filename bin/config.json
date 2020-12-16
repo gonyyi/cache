@@ -1,0 +1,22 @@
+{
+   "data_dir": "./tmp",
+   "items": {
+      "test": {
+         "request": {
+            "method": "GET",
+            "url": "https://gonyyi.com/copyright.txt?{subvar:randomTest}",
+            "id": "",
+            "passwd": "",
+            "body": "",
+            "content_type": "",
+            "sub_var": {
+               "randomTest": "hiFive"
+            }
+         },
+         "response": {
+            "last_updated": "2020-12-15 18:42:27",
+            "size_kb": 996
+         }
+      }
+   }
+}
