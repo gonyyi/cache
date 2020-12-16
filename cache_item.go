@@ -17,7 +17,7 @@ type cacheItem struct {
 	} `json:"request"`
 	Response struct {
 		LastUpdated string `json:"last_updated"` // 2020-10-10 24:10:10
-		SizeKB      int    `json:"size_kb"`
+		Size        int    `json:"size"`
 	} `json:"response"`
 }
 
