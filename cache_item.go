@@ -1,3 +1,5 @@
+// (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
+
 package cache
 
 import "fmt"
