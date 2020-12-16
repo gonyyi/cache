@@ -1,7 +1,10 @@
+// (c) 2020 Gon Y Yi. <https://gonyyi.com/copyright.txt>
+
 package cache
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,10 +13,8 @@ import (
 	"sync"
 )
 
-const DEFAULT_DATA_FILE_EXT = ".download"
-
 type Cache struct {
-	log         cacheLogger
+	log         Logger
 	conn        httpClient
 	mu          sync.Mutex // global mutex
 	configFile  string
@@ -23,12 +24,21 @@ type Cache struct {
 }
 
 func (c *Cache) init() *Cache {
-	c.log = NewCacheLog(os.Stderr)
+	c.log = newDummyLogger()
 	c.conn = NewAReq()
-	c.DataFileExt = DEFAULT_DATA_FILE_EXT
+	c.DataFileExt = ".download"
 	c.DataDir = "./tmp"
 	c.Items = make(map[string]*cacheItem)
 	return c
+}
+
+func (c *Cache) SetLogger(l Logger) error {
+	if l != nil {
+		c.log = l
+		c.log.Debugf("logger updated")
+		return nil
+	}
+	return errors.New(ERR_NIL_LOG)
 }
 
 func (c *Cache) IsCacheExists(name string) bool {
@@ -107,8 +117,8 @@ func (c *Cache) Save() error {
 	return nil
 }
 
-func NewConfig(filename string, addExampleCache bool) error {
-	c := new()
+func CreateNewConfig(filename string, addExampleCache bool) error {
+	c := New()
 	c.configFile = filename
 	if addExampleCache {
 		c.AddCache("test", "GET", "https://gonyyi.com/copyright.txt", "", "")
@@ -119,50 +129,50 @@ func NewConfig(filename string, addExampleCache bool) error {
 	return nil
 }
 
-func new() *Cache {
+func New() *Cache {
 	r := Cache{}
 	return r.init()
 }
 
-func New(configPath string) (*Cache, error) {
-	r := new()
-	r.configFile = configPath
+func (c *Cache) Open(configPath string) error {
 
-	r.log.Infof("initiating Cache <%s>", configPath)
+	c.configFile = configPath
+
+	c.log.Infof("initiating Cache <%s>", configPath)
 
 	if b, err := ioutil.ReadFile(configPath); err != nil {
-		r.log.Errorf("cannot open the config file <%s>: %s", configPath, err.Error())
-		return nil, err
-	} else if err = json.Unmarshal(b, &r); err != nil {
-		r.log.Errorf("cannot unmarshal the config file <%s>: %s", configPath, err.Error())
-		return nil, err
+		c.log.Errorf("cannot open the config file <%s>: %s", configPath, err.Error())
+		return err
+	} else if err = json.Unmarshal(b, &c); err != nil {
+		c.log.Errorf("cannot unmarshal the config file <%s>: %s", configPath, err.Error())
+		return err
 	}
-	r.log.Infof("loaded the config file <%s>", configPath)
+	c.log.Infof("loaded the config file <%s>", configPath)
 
 	// Create a data directory (DataDir) if not exist
 	{
-		if r.DataDir == "" {
-			r.log.Warnf("config does not hav data_dir, use default <./tmp> instead")
-			r.DataDir = "./tmp"
+		if c.DataDir == "" {
+			c.log.Warnf("config does not hav data_dir, use default <./tmp> instead")
+			c.DataDir = "./tmp"
 		}
 
-		if _, err := os.Stat(r.DataDir); err != nil {
+		if _, err := os.Stat(c.DataDir); err != nil {
 			if os.IsNotExist(err) {
-				r.log.Warnf("data_dir <%s> not exist, creating the directory", r.DataDir)
-				if os.MkdirAll(r.DataDir, 0755) != nil {
-					r.log.Fatalf("failed to create data_dir <%s>", r.DataDir)
+				c.log.Warnf("data_dir <%s> not exist, creating the directory", c.DataDir)
+				if os.MkdirAll(c.DataDir, 0755) != nil {
+					c.log.Fatalf("failed to create data_dir <%s>", c.DataDir)
 				}
 			} else {
-				r.log.Fatalf("cannot open data_dir <%s>", r.DataDir)
+				c.log.Fatalf("cannot open data_dir <%s>", c.DataDir)
 			}
 		}
 	}
 
-	r.log.Infof("total Cache items: %d", len(r.Items))
+	c.log.Infof("total Cache items: %d", len(c.Items))
 	count := 0
-	for name, _ := range r.Items {
+	for name, _ := range c.Items {
 		count += 1
-		r.log.Infof("Cache item [%d]: <%s>", count, name)
+		c.log.Infof("Cache item [%d]: <%s>", count, name)
 	}
-	return r, nil
+	return nil
 }
